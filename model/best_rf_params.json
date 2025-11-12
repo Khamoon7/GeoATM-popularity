@@ -1,0 +1,11 @@
+{
+    "model__bootstrap": true,
+    "model__max_samples": 0.7433691372778383,
+    "model__n_estimators": 746,
+    "model__criterion": "friedman_mse",
+    "model__max_depth": 28,
+    "model__min_samples_leaf": 2,
+    "model__min_samples_split": 6,
+    "model__min_impurity_decrease": 0.0007467433568205243,
+    "model__max_features": 0.39073217360144474
+}
