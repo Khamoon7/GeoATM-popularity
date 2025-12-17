@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import ValidationError
 
 from app.core.schemas import ATMPredictRequest, ATMPredictResponse
-from app.core.model import predict_popularity
+from app.core.model import atm_model_service
 
 router = APIRouter()
 history_logger = logging.getLogger("history") 
