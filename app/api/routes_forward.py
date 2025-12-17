@@ -71,7 +71,7 @@ async def forward(request: Request) -> ATMPredictResponse:
         from app.core.model import model  # type: ignore
 
         # model.predict_popularity должен вернуть индекс популярности (float)
-        pred = float(model.predict_popularity(req_obj.model_dump()))
+        pred = float(atm_model_service.predict_popularity(req_obj.model_dump()))
     except Exception:
         history_logger.exception("forward_inference_failed")
         raise HTTPException(status_code=403, detail="Модель не смогла обработать данные")
