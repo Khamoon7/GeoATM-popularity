@@ -1,7 +1,7 @@
 import asyncio
 import pandas as pd
 
-from geo_atm_popularity.features_builder import FeaturesBuilder
+from features_builder import FeaturesBuilder
 
 
 async def main():
@@ -9,7 +9,7 @@ async def main():
         regions_density_csv="data/regions_population_density_area.csv"
     )
 
-    # Пример из трейнаы
+    # Пример из трейна
     lat, lon = 54.270443, 48.300652
 
     df = await builder.build(
@@ -24,6 +24,25 @@ async def main():
             "is_247": True,
         },
     )
+
+    print(df.T)      
+    print("\nDtypes:\n", df.dtypes)
+
+    # sanity-check по ключевым колонкам
+    must_have = [
+        "atm_lat", "atm_lon", "normalized_address", "province", "operations",
+        "population_density_per_km2",
+        "count_cafes_300m", "nearest_cafes_dist_m",
+        "count_subway_300m", "nearest_subway_dist_m", "has_subway_nearby",
+        "count_post_offices_300m", "nearest_post_offices_dist_m",
+    ]
+    missing = [c for c in must_have if c not in df.columns]
+    print("\nMissing columns:", missing)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
 
 """
 loc = LocationResult(...)
@@ -46,21 +65,3 @@ df = await builder.build(
     }
 )
 """
-
-    print(df.T)      
-    print("\nDtypes:\n", df.dtypes)
-
-    # sanity-check по ключевым колонкам
-    must_have = [
-        "atm_lat", "atm_lon", "normalized_address", "province", "operations",
-        "population_density_per_km2",
-        "count_cafes_300m", "nearest_cafes_dist_m",
-        "count_subway_300m", "nearest_subway_dist_m", "has_subway_nearby",
-        "count_post_offices_300m", "nearest_post_offices_dist_m",
-    ]
-    missing = [c for c in must_have if c not in df.columns]
-    print("\nMissing columns:", missing)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
