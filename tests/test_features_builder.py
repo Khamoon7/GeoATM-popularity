@@ -25,6 +25,28 @@ async def main():
         },
     )
 
+"""
+loc = LocationResult(...)
+
+df = await builder.build(
+    lat=loc.lat,
+    lon=loc.lon,
+    atm_params={
+        "normalized_address": loc.normalized_address,
+        "province": loc.province,
+        "area": loc.area,
+        "locality": loc.locality,
+        "street": loc.street,
+        "house": loc.house,
+        "country": loc.country,
+        "is_russia": loc.is_russia,
+        # плюс поля банкомата:
+        "operations": operations,
+        "atm_address_input": user_address,  # если нужно
+    }
+)
+"""
+
     print(df.T)      
     print("\nDtypes:\n", df.dtypes)
 
