@@ -49,7 +49,7 @@ class ForwardService:
         lat = payload.get("lat")
         lon = payload.get("lon")
 
-        # Геокодинг / нормализация
+        # Геокодинг
         loc: LocationResult = self.location_reader.read(address=address, lat=lat, lon=lon)
 
         if not loc.ok:
@@ -102,7 +102,7 @@ class ForwardService:
         """
         Собирает словарь параметров для FeaturesBuilder:
           - адресные поля из LocationResult
-          - исходные поля банкомата из payload (operations, bank_type, etc.)
+          - исходные поля банкомата из payload
         """
         atm_only: Dict[str, Any] = dict(payload)
         atm_only.pop("address", None)
@@ -129,7 +129,6 @@ class ForwardService:
     def _location_to_dict(loc: LocationResult) -> Dict[str, Any]:
         """
         Универсальная конвертация LocationResult в dict.
-        Работает и для dataclass, и для pydantic (если когда-то поменяешь реализацию).
         """
         if is_dataclass(loc):
             return asdict(loc)
