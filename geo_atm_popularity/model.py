@@ -17,7 +17,7 @@ class ATMModelService:
 
     def __init__(
         self,
-        model_path: Path | str = Path("models") / "atm_popularity_model.pkl",
+        model_path: Path | str = Path("geo_atm_popularity") / "final_atm_pipeline.pkl",
     ) -> None:
         self.model_path = Path(model_path)
         self.model = self.load_model()
