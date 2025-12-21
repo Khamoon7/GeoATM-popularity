@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-# твои компоненты
 from app.service.location_reader import LocationReader, LocationResult
 from app.service.features_builder import FeaturesBuilder
 from app.core.model import ATMModelService
@@ -18,9 +17,8 @@ class ForwardService:
     Последовательно:
       1) LocationReader.read() -> LocationResult
       2) FeaturesBuilder.build() -> DataFrame(features)
-      3) FeaturesValidator.validate() -> DataFrame(features_clean), warnings
-      4) ModelService.predict() -> popularity_index
-      5) Формирует единый JSON-ответ
+      3) ModelService.predict() -> popularity_index
+      4) Формирует единый JSON-ответ
     """
 
     def __init__(
@@ -53,7 +51,6 @@ class ForwardService:
             return {
                 "ok": False,
                 "error": loc.error,
-                "warnings": [],
                 "normalized_address": loc.normalized_address,
                 "lat": loc.lat,
                 "lon": loc.lon,
@@ -63,7 +60,6 @@ class ForwardService:
             return {
                 "ok": False,
                 "error": "LocationReader вернул ok=True, но координаты отсутствуют",
-                "warnings": [],
                 "normalized_address": loc.normalized_address,
                 "lat": loc.lat,
                 "lon": loc.lon,
@@ -92,7 +88,6 @@ class ForwardService:
             "lat": float(loc.lat),
             "lon": float(loc.lon),
             "popularity_index": float(popularity_index),
-            "warnings": warnings,
         }
 
     def _build_atm_params(self, payload: Dict[str, Any], loc: LocationResult) -> Dict[str, Any]:
@@ -125,7 +120,7 @@ class ForwardService:
     @staticmethod
     def _location_to_dict(loc: LocationResult) -> Dict[str, Any]:
         """
-        Универсальная конвертация LocationResult в dict.
+        Конвертация LocationResult в dict.
         """
         if is_dataclass(loc):
             return asdict(loc)
