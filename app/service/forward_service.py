@@ -83,7 +83,7 @@ class ForwardService:
         )
 
         # Валидация/пост-обработка признаков
-        features_df, warnings = self.features_validator.validate(features_df)
+        ##features_df, warnings = self.features_validator.validate(features_df)
 
         # Инференс модели
         popularity_index = self.model.predict_popularity(features_df)
