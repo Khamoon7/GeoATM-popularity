@@ -41,7 +41,7 @@ class FeaturesBuilder:
 
     ### Плотность населения в регионе
     - `population_density_per_km2`: берётся из CSV `data/regions_population_density_area.csv`
-      по `province` (вход) -> `"Субъект РФ"` (CSV) -> `"Плотность населения, чел/км²"`.
+      по `region` (вход) -> `"Субъект РФ"` (CSV) -> `"Плотность населения, чел/км²"`.
 
     ### Выход
     - `pandas.DataFrame` из одной строки с исходными параметрами + OSM признаками.
@@ -129,7 +129,7 @@ class FeaturesBuilder:
 
         ### Логика
         1. Собирает "сырой" df.row из входных данных (координаты + доступные операции).
-        2. Добавляет `population_density_per_km2` по `province` из справочных данных.
+        2. Добавляет `population_density_per_km2` по `region` из справочных данных.
         3. Для каждой группы POI:
            - делает запрос к OSM в радиусе 1000м
            - считает `count_*_300m` и `nearest_*_dist_m`
@@ -155,7 +155,7 @@ class FeaturesBuilder:
         }
 
         # плотность населения
-        row["population_density_per_km2"] = self._get_population_density(params.get("province"))
+        row["population_density_per_km2"] = self._get_population_density(params.get("region"))
 
         # один клиент на весь build
         headers = {"User-Agent": "features-builder/1.0 (contact: you@example.com)"}
@@ -264,12 +264,12 @@ class FeaturesBuilder:
 
         return mapping
 
-    def _get_population_density(self, province: Any) -> float:
+    def _get_population_density(self, region: Any) -> float:
         """
         ## _get_population_density
 
-        Возвращает `population_density_per_km2` по входному `province`
-        (из твоего `LocationResult.province`).
+        Возвращает `population_density_per_km2` по входному `region`
+        (из твоего `LocationResult.region`).
 
         ### Источник
         CSV: `data/regions_population_density_area.csv`
@@ -278,17 +278,17 @@ class FeaturesBuilder:
         - значение берём из колонки `"Плотность населения, чел/км²"`
 
         ### Поведение при ошибках/неполадках
-        - если `province` пустой или не найден в маппинге → `NaN`
+        - если `region` пустой или не найден в маппинге → `NaN`
 
         ### Параметры
-        - `province`: название региона (строка)
+        - `region`: название региона (строка)
 
         ### Возвращает
         - `float`: плотность населения или `NaN`
         """
-        if province is None or (isinstance(province, str) and not province.strip()):
+        if region is None or (isinstance(region, str) and not region.strip()):
             return float("nan")
-        key = self._normalize_region_name(province)
+        key = self._normalize_region_name(region)
         val = self._region_to_density.get(key)
         return float(val) if val is not None else float("nan")
 

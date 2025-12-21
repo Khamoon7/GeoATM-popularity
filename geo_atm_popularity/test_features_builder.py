@@ -17,7 +17,7 @@ async def main():
         lon=lon,
         atm_params={
             "normalized_address": "Москва, Красная площадь, 1",
-            "province": "Ульяновская область",              # должно матчиться с "Субъект РФ" в CSV (после нормализации)
+            "region": "Ульяновская область",              # должно матчиться с "Субъект РФ" в CSV (после нормализации)
             "operations": ["withdraw", "deposit"],
             "bank_type": "sber",
             "cash_in": True,
@@ -30,7 +30,7 @@ async def main():
 
     # sanity-check по ключевым колонкам
     must_have = [
-        "atm_lat", "atm_lon", "normalized_address", "province", "operations",
+        "atm_lat", "atm_lon", "normalized_address", "region", "operations",
         "population_density_per_km2",
         "count_cafes_300m", "nearest_cafes_dist_m",
         "count_subway_300m", "nearest_subway_dist_m", "has_subway_nearby",
@@ -52,9 +52,9 @@ df = await builder.build(
     lon=loc.lon,
     atm_params={
         "normalized_address": loc.normalized_address,
-        "province": loc.province,
-        "area": loc.area,
-        "locality": loc.locality,
+        "region": loc.province,
+        "municipality": loc.area,
+        "city": loc.locality,
         "street": loc.street,
         "house": loc.house,
         "country": loc.country,
