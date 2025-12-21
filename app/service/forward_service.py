@@ -8,7 +8,6 @@ import pandas as pd
 # твои компоненты
 from app.service.location_reader import LocationReader, LocationResult
 from app.service.features_builder import FeaturesBuilder
-from app.service.features_validator import FeaturesValidator
 from app.core.model import ATMModelService
 
 
@@ -28,12 +27,10 @@ class ForwardService:
         self,
         location_reader: LocationReader,
         features_builder: FeaturesBuilder,
-        features_validator: FeaturesValidator,
         model: ATMModelService,
     ) -> None:
         self.location_reader = location_reader
         self.features_builder = features_builder
-        self.features_validator = features_validator
         self.model = model
 
     async def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:

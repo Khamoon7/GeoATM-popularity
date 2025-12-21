@@ -4,7 +4,6 @@ from functools import lru_cache
 
 from app.service.location_reader import LocationReader
 from app.service.features_builder import FeaturesBuilder
-from app.service.features_validator import FeaturesValidator
 from app.core.model import ATMModelService
 from app.service.forward_service import ForwardService
 
@@ -14,6 +13,5 @@ def get_forward_service() -> ForwardService:
     return ForwardService(
         location_reader=LocationReader(),
         features_builder=FeaturesBuilder(),
-        features_validator=FeaturesValidator(),
         model=ATMModelService(),
     )
