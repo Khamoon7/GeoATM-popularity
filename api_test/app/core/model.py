@@ -52,7 +52,7 @@ class ATMModelService:
 
         return model
 
-    def predict_popularity(
+    def predict(
         self,
         raw_features: pd.DataFrame,
     ) -> Tuple[float, List[str]]:
