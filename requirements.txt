@@ -1,0 +1,9 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+
+# тесты
+pytest>=7.4
+httpx>=0.24
+
+scikit-learn==1.8.0
+joblib==1.5.3
