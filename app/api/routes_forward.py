@@ -104,12 +104,12 @@ async def forward(
     except ValueError as e:
         status_code = 400
         error_text = f"{type(e).__name__}: {e}"
-        raise HTTPException(status_code=400, detail=e)
+        raise HTTPException(status_code=400, detail="bad request")
 
     except Exception as e:
         status_code = 403
         error_text = f"{type(e).__name__}: {e}"
-        raise HTTPException(status_code=403, detail="aaa")
+        raise HTTPException(status_code=403, detail="модель не смогла обработать данные")
 
     finally:
         latency_ms = (time.perf_counter() - start_ts) * 1000.0
