@@ -49,28 +49,28 @@ def _is_forward(request: Request) -> bool:
     return request.url.path.rstrip("/") == "/forward"
 
 
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request: Request, exc: RequestValidationError) -> PlainTextResponse:
-#     if _is_forward(request):
-#         return PlainTextResponse("bad request", status_code=400)
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> PlainTextResponse:
+    if _is_forward(request):
+        return PlainTextResponse("bad request", status_code=400)
 
-#     return PlainTextResponse("bad request", status_code=400)
-
-
-# @app.exception_handler(HTTPException)
-# async def http_exception_handler(request: Request, exc: HTTPException) -> PlainTextResponse:
-#     if _is_forward(request):
-#         if exc.status_code == 400:
-#             return PlainTextResponse("bad request", status_code=400)
-#         if exc.status_code == 403:
-#             return PlainTextResponse("модель не смогла обработать данные", status_code=403)
-
-#     return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+    return PlainTextResponse("bad request", status_code=400)
 
 
-# @app.exception_handler(Exception)
-# async def unhandled_exception_handler(request: Request, exc: Exception) -> PlainTextResponse:
-#     if _is_forward(request):
-#         return PlainTextResponse("модель не смогла обработать данные", status_code=403)
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> PlainTextResponse:
+    if _is_forward(request):
+        if exc.status_code == 400:
+            return PlainTextResponse("bad request", status_code=400)
+        if exc.status_code == 403:
+            return PlainTextResponse("модель не смогла обработать данные", status_code=403)
 
-#     return PlainTextResponse("internal server error", status_code=500)
+    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> PlainTextResponse:
+    if _is_forward(request):
+        return PlainTextResponse("модель не смогла обработать данные", status_code=403)
+
+    return PlainTextResponse("internal server error", status_code=500)
