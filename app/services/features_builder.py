@@ -11,6 +11,8 @@ import random
 import httpx
 import pandas as pd
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
@@ -50,7 +52,9 @@ class FeaturesBuilder:
 
     concurrency: int = 3
 
-    regions_density_csv: str = "data/regions_population_density_area.csv"
+    regions_density_csv: Path = field(
+        default_factory=lambda: Path(__file__).resolve().parents[2] / "data" / "regions_population_density_area.csv"
+    )
     csv_region_col: str = "Субъект РФ"
     csv_density_col: str = "Плотность населения, чел/км²"
 
@@ -167,7 +171,11 @@ class FeaturesBuilder:
             if c.startswith("nearest_") and c.endswith("_dist_m"):
                 df[c] = df[c].astype("Float64")
 
-        df["has_subway_nearby"] = df["has_subway_nearby"].astype("boolean")
+        df["has_subway_nearby"] = (
+            df["has_subway_nearby"]
+            .map({True: 1.0, False: 0.0})
+            .astype("Float64")
+        )
 
         return df
 
@@ -184,22 +192,11 @@ class FeaturesBuilder:
 
         Возвращает пустой словарь при любой ошибке.
         """
-        candidates: List[Path] = [Path(self.regions_density_csv)]
-
-        try:
-            here = Path(__file__).resolve()
-            candidates.append(here.parent / self.regions_density_csv)
-            candidates.append(here.parent.parent / self.regions_density_csv)
-            candidates.append(here.parent.parent.parent / self.regions_density_csv)
-        except NameError:
-            pass
-
-        csv_path = next((p.resolve() for p in candidates if p.exists()), None)
-        if csv_path is None:
+        if not self.regions_density_csv.exists():
             return {}
 
         try:
-            df = pd.read_csv(csv_path, encoding="utf-8")
+            df = pd.read_csv(self.regions_density_csv, encoding="utf-8")
         except Exception:
             return {}
 
