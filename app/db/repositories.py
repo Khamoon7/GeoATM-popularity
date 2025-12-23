@@ -7,7 +7,17 @@ from app.db.models import RequestLog
 
 
 class RequestLogRepository:
+    """
+    Репозиторий для работы с историей запросов.
+
+    Инкапсулирует операции записи, чтения и очистки
+    таблицы request_log.
+    """
+
     def __init__(self, db: Session):
+        """
+        Инициализирует репозиторий с активной DB-сессией.
+        """
         self.db = db
 
     def add_log(
@@ -25,6 +35,11 @@ class RequestLogRepository:
         address_len: int | None = None,
         address_tokens: int | None = None,
     ) -> RequestLog:
+        """
+        Сохраняет запись о запросе в базе данных.
+
+        Возвращает созданный ORM-объект.
+        """
         row = RequestLog(
             endpoint=endpoint,
             method=method,
@@ -44,6 +59,11 @@ class RequestLogRepository:
         return row
 
     def get_history(self, *, limit: int = 50, offset: int = 0) -> list[RequestLog]:
+        """
+        Возвращает историю запросов с пагинацией.
+
+        Записи сортируются по убыванию id.
+        """
         stmt = (
             select(RequestLog)
             .order_by(RequestLog.id.desc())
@@ -53,6 +73,11 @@ class RequestLogRepository:
         return list(self.db.execute(stmt).scalars().all())
 
     def clear_history(self) -> int:
+        """
+        Удаляет все записи истории запросов.
+
+        Возвращает количество удалённых строк.
+        """
         stmt = delete(RequestLog)
         res = self.db.execute(stmt)
         self.db.commit()

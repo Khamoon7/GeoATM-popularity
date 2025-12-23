@@ -13,6 +13,11 @@ import pandas as pd
 
 
 def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Вычисляет расстояние между двумя точками на сфере в метрах.
+
+    Используется для расчёта расстояний до POI.
+    """
     R = 6_371_000
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
@@ -22,6 +27,13 @@ def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 @dataclass
 class FeaturesBuilder:
+    """
+    Сервис построения признаков по координатам банкомата.
+
+    Выполняет запросы к Overpass API, агрегирует POI,
+    добавляет региональные и геопризнаки.
+    """
+
     overpass_url: str = "https://overpass-api.de/api/interpreter"
 
     count_radius_m: int = 300
@@ -80,6 +92,11 @@ class FeaturesBuilder:
         atm_params: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
+        """
+        Строит DataFrame признаков для одного банкомата.
+
+        Принимает координаты напрямую или через payload/atm_params.
+        """
         params: Dict[str, Any] = {}
         if payload:
             params.update(payload)
@@ -103,6 +120,7 @@ class FeaturesBuilder:
             "population_density_per_km2": self._get_population_density(params.get("region")),
         }
 
+        # Убираем возможные дубли координат
         row.pop("atm_lat", None)
         row.pop("atm_lon", None)
         row.pop("lat", None)
@@ -126,6 +144,7 @@ class FeaturesBuilder:
         for feats in results:
             osm_feats.update(feats)
 
+        # Флаг наличия метро поблизости
         val = osm_feats.get("nearest_subway_dist_m", pd.NA)
         if val is pd.NA:
             osm_feats["has_subway_nearby"] = pd.NA
@@ -138,10 +157,12 @@ class FeaturesBuilder:
 
         df = pd.DataFrame([row])
 
+        # Приведение типов счётчиков
         for c in df.columns:
             if c.startswith("count_") and c.endswith("m"):
                 df[c] = df[c].astype("Int64")
 
+        # Приведение типов расстояний
         for c in df.columns:
             if c.startswith("nearest_") and c.endswith("_dist_m"):
                 df[c] = df[c].astype("Float64")
@@ -152,9 +173,17 @@ class FeaturesBuilder:
 
     @staticmethod
     def _normalize_region_name(s: Any) -> str:
+        """
+        Нормализует название региона для сопоставления.
+        """
         return " ".join(str(s).strip().lower().split())
 
     def _load_region_density_map_safely(self) -> Dict[str, float]:
+        """
+        Загружает CSV с плотностью населения, если файл доступен.
+
+        Возвращает пустой словарь при любой ошибке.
+        """
         candidates: List[Path] = [Path(self.regions_density_csv)]
 
         try:
@@ -192,6 +221,9 @@ class FeaturesBuilder:
         return mapping
 
     def _get_population_density(self, region: Any) -> float:
+        """
+        Возвращает плотность населения для региона или NaN.
+        """
         if region is None or (isinstance(region, str) and not region.strip()):
             return float("nan")
         key = self._normalize_region_name(region)
@@ -207,6 +239,11 @@ class FeaturesBuilder:
         *,
         radius_m: int,
     ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Выполняет Overpass-запрос для набора фильтров.
+
+        Возвращает список уникальных OSM-объектов или None при ошибке.
+        """
         objects: List[str] = []
         for f in filters:
             objects.append(f"node[{f}](around:{radius_m},{lat},{lon});")
@@ -254,6 +291,9 @@ class FeaturesBuilder:
 
     @staticmethod
     def _get_latlon(el: Dict[str, Any]) -> Optional[Tuple[float, float]]:
+        """
+        Извлекает координаты объекта OSM.
+        """
         if "lat" in el and "lon" in el:
             return float(el["lat"]), float(el["lon"])
         center = el.get("center")
@@ -262,6 +302,9 @@ class FeaturesBuilder:
         return None
 
     def _dists(self, lat: float, lon: float, elements: List[Dict[str, Any]]) -> List[float]:
+        """
+        Считает расстояния от точки до списка OSM-объектов.
+        """
         out: List[float] = []
         for el in elements:
             ll = self._get_latlon(el)
@@ -278,6 +321,9 @@ class FeaturesBuilder:
         group: str,
         filters: List[str],
     ) -> Dict[str, Any]:
+        """
+        Строит признаки для одной группы POI.
+        """
         elements = await self.osm_queries(client, lat, lon, filters, radius_m=self.nearest_search_radius_m)
 
         if elements is None:
@@ -295,6 +341,9 @@ class FeaturesBuilder:
         return feats
 
     def _group_na(self, group: str) -> Dict[str, Any]:
+        """
+        Возвращает NA-признаки для группы POI при ошибке запроса.
+        """
         feats: Dict[str, Any] = {f"count_{group}_{self.count_radius_m}m": pd.NA}
         if group != "banks_atms":
             feats[f"nearest_{group}_dist_m"] = pd.NA

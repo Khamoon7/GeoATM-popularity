@@ -9,4 +9,10 @@ router = APIRouter(tags=["stats"])
 
 @router.get("/stats")
 def stats(db: Session = Depends(get_db)):
+    """
+    Возвращает агрегированную статистику по истории запросов.
+
+    Используется для мониторинга качества сервиса
+    и анализа характеристик входных данных.
+    """
     return get_stats(db)

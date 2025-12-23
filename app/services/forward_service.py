@@ -2,25 +2,43 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-import pandas as pd
-
 from app.services.location_reader import LocationReader, LocationResult
 from app.services.features_builder import FeaturesBuilder
 from app.core.model import ATMModelService
 
 
 class ForwardService:
+    """
+    Оркестратор инференса для /forward.
+
+    Выполняет:
+    - нормализацию локации (адрес или координаты),
+    - сбор признаков,
+    - инференс модели,
+    - сбор предупреждений и формирование результата.
+    """
+
     def __init__(
         self,
         location_reader: LocationReader,
         features_builder: FeaturesBuilder,
         model: ATMModelService,
     ) -> None:
+        """
+        Инициализирует сервис зависимостями для геокодинга, фичей и модели.
+        """
         self.location_reader = location_reader
         self.features_builder = features_builder
         self.model = model
 
     async def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Выполняет полный пайплайн обработки одного запроса.
+
+        Бросает:
+        - ValueError для ошибок входных данных (маппится в 400),
+        - RuntimeError для ошибок обработки (маппится в 403).
+        """
         address = payload.get("address")
         lat = payload.get("lat")
         lon = payload.get("lon")
@@ -46,9 +64,10 @@ class ForwardService:
         try:
             features_df = await self.features_builder.build(payload=build_payload)
         except ValueError as e:
+            # Ошибки валидации/входных данных трактуем как 400
             raise ValueError(str(e)) from e
         except Exception as e:
-            # падение overpass/сети/любая сборка фичей — это 403
+            # Падение overpass/сети/любая сборка фичей — это 403
             raise RuntimeError(f"FeaturesBuilder failed: {type(e).__name__}: {e}") from e
 
         try:
@@ -68,11 +87,13 @@ class ForwardService:
             "warnings": warnings,
         }
 
-    def _build_atm_params(
-        self,
-        payload: Dict[str, Any],
-        loc: LocationResult,
-    ) -> Dict[str, Any]:
+    def _build_atm_params(self, payload: Dict[str, Any], loc: LocationResult) -> Dict[str, Any]:
+        """
+        Собирает параметры банкомата и нормализованные геоданные в единый payload.
+
+        Убирает поля локации из исходного payload, чтобы избежать дублей,
+        и добавляет разобранные компоненты адреса из LocationReader.
+        """
         atm_only: Dict[str, Any] = dict(payload)
         atm_only.pop("address", None)
         atm_only.pop("lat", None)

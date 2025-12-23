@@ -6,18 +6,48 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Coords(BaseModel):
+    """
+    Географические координаты.
+    """
     lat: float = Field(..., ge=-90.0, le=90.0, description="Широта")
     lon: float = Field(..., ge=-180.0, le=180.0, description="Долгота")
 
 
 class ATMPredictRequest(BaseModel):
+    """
+    Входная схема /forward.
+
+    Поддерживает два взаимоисключающих способа задания локации:
+    - address
+    - lat/lon
+
+    Также умеет вычислять atm_group по bank_name, если atm_group не задан явно.
+    """
+
+    # Запрещаем лишние поля в запросе
     model_config = ConfigDict(extra="forbid")
 
     atm_id: Optional[str] = Field(default=None, description="ID банкомата (опционально)")
 
-    address: Optional[str] = Field(default=None, description="Адрес (если ввод адресом)", examples=["Москва, Тверская 1"],)
-    lat: Optional[float] = Field(default=None, ge=-90.0, le=90.0, description="Широта (если ввод координатами)", examples=[55.7558],)
-    lon: Optional[float] = Field(default=None, ge=-180.0, le=180.0, description="Долгота (если ввод координатами)", examples=[37.6173],)
+    address: Optional[str] = Field(
+        default=None,
+        description="Адрес (если ввод адресом)",
+        examples=["Москва, Тверская 1"]
+    )
+    lat: Optional[float] = Field(
+        default=None,
+        ge=-90.0,
+        le=90.0,
+        description="Широта (если ввод координатами)",
+        examples=[55.7558]
+    )
+    lon: Optional[float] = Field(
+        default=None,
+        ge=-180.0,
+        le=180.0,
+        description="Долгота (если ввод координатами)",
+        examples=[37.6173]
+    )
 
     bank_name: Optional[str] = Field(default=None, description="Название банка для авто-вычисления atm_group")
     atm_group: Optional[float] = Field(default=None, description="Числовой код группы банка")
@@ -38,6 +68,14 @@ class ATMPredictRequest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_location_and_set_group(self) -> "ATMPredictRequest":
+        """
+        Валидирует способ задания локации и при необходимости заполняет atm_group.
+
+        Правила:
+        - address и lat/lon взаимоисключающие,
+        - lat/lon должны быть заданы парой,
+        - если atm_group не задан, он вычисляется из bank_name (fallback = 32.0).
+        """
         has_address = self.address is not None and self.address.strip() != ""
         has_lat = self.lat is not None
         has_lon = self.lon is not None
@@ -50,6 +88,7 @@ class ATMPredictRequest(BaseModel):
         if (has_lat and not has_lon) or (has_lon and not has_lat):
             raise ValueError("Координаты должны быть заданы парой: и lat, и lon")
 
+        # Авто-определение группы банка, если не передана явно
         if self.atm_group is None:
             name = (self.bank_name or "").strip().lower()
             if not name:
@@ -73,6 +112,10 @@ class ATMPredictRequest(BaseModel):
 
 
 class ATMPredictResponse(BaseModel):
+    """
+    Выходная схема /forward.
+    """
+
     atm_id: Optional[str] = Field(default=None, description="ID банкомата")
     popularity_index: float = Field(..., description="Индекс популярности")
     segment: Optional[str] = Field(default=None, description="Сегмент")

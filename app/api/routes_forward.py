@@ -17,6 +17,9 @@ router = APIRouter(tags=["forward"])
 
 
 def _count_json_fields(obj: Any) -> int:
+    """
+    Подсчитывает количество ключей во всех вложенных dict/list структурах.
+    """
     if isinstance(obj, dict):
         return len(obj) + sum(_count_json_fields(v) for v in obj.values())
     if isinstance(obj, list):
@@ -25,6 +28,11 @@ def _count_json_fields(obj: Any) -> int:
 
 
 def _json_size_bytes(payload: Dict[str, Any]) -> int:
+    """
+    Оценивает размер JSON-пейлоада в байтах (UTF-8).
+
+    Возвращает 0 при ошибке сериализации.
+    """
     try:
         raw = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
         return len(raw)
@@ -33,6 +41,9 @@ def _json_size_bytes(payload: Dict[str, Any]) -> int:
 
 
 def _address_len(payload: Dict[str, Any]) -> Optional[int]:
+    """
+    Возвращает длину строки адреса, если address передан строкой.
+    """
     addr = payload.get("address")
     if isinstance(addr, str):
         return len(addr)
@@ -40,6 +51,9 @@ def _address_len(payload: Dict[str, Any]) -> Optional[int]:
 
 
 def _address_tokens(payload: Dict[str, Any]) -> Optional[int]:
+    """
+    Возвращает количество токенов в адресе (простое разбиение по пробелам).
+    """
     addr = payload.get("address")
     if not isinstance(addr, str):
         return None
@@ -48,6 +62,11 @@ def _address_tokens(payload: Dict[str, Any]) -> Optional[int]:
 
 
 def _segment_from_prediction(pred: float) -> str:
+    """
+    Маппит численное предсказание в сегмент.
+
+    Сегментация нужна для удобства клиентам API.
+    """
     if pred > 0:
         return "high"
     if pred < 0:
@@ -61,6 +80,16 @@ async def forward(
     svc: ForwardService = Depends(get_forward_service),
     db: Session = Depends(get_db),
 ) -> ATMPredictResponse:
+    """
+    Inference endpoint: рассчитывает индекс популярности банкомата.
+
+    Возвращает:
+    - 400 (bad request) при ошибках валидации/входных данных,
+    - 403 при ошибках обработки (геокодер/OSM/модель),
+    - 200 при успешном расчёте.
+
+    Всегда пишет запись в историю запросов.
+    """
     start_ts = time.perf_counter()
 
     endpoint = "/forward"
@@ -72,6 +101,7 @@ async def forward(
 
     payload: Dict[str, Any] = req_obj.model_dump()
 
+    # Метрики запроса для /history и /stats
     json_size_bytes = _json_size_bytes(payload)
     json_num_fields = _count_json_fields(payload)
     address_len = _address_len(payload)
@@ -90,23 +120,26 @@ async def forward(
             coords=Coords(
                 lat=float(result["lat"]),
                 lon=float(result["lon"]),
-            ),
+            )
         )
 
         response_obj = resp.model_dump()
         return resp
 
     except HTTPException as e:
+        # Пробрасываем HTTP ошибки как есть, но фиксируем в логе
         status_code = int(e.status_code)
         error_text = str(e.detail)
         raise
 
     except ValueError as e:
+        # Ошибки формата/валидации маппим на 400
         status_code = 400
         error_text = f"{type(e).__name__}: {e}"
         raise HTTPException(status_code=400, detail="bad request")
 
     except Exception as e:
+        # Любые ошибки модели/внешних сервисов маппим на 403
         status_code = 403
         error_text = f"{type(e).__name__}: {e}"
         raise HTTPException(status_code=403, detail="модель не смогла обработать данные")
@@ -126,5 +159,5 @@ async def forward(
             json_size_bytes=json_size_bytes,
             json_num_fields=json_num_fields,
             address_len=address_len,
-            address_tokens=address_tokens,
+            address_tokens=address_tokens
         )

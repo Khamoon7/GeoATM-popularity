@@ -12,6 +12,11 @@ Number = Union[int, float]
 
 
 def _compute_stats(values: Sequence[Number]) -> Dict[str, Optional[float]]:
+    """
+    Вычисляет базовые агрегаты для числового ряда.
+
+    Используется для расчёта статистик по логам.
+    """
     if not values:
         return {"mean": None, "p50": None, "p95": None, "p99": None}
 
@@ -26,8 +31,15 @@ def _compute_stats(values: Sequence[Number]) -> Dict[str, Optional[float]]:
 
 
 def get_stats(db: Session) -> Dict[str, Any]:
+    """
+    Возвращает агрегированную статистику по истории запросов.
+
+    Считает количество запросов и распределения
+    ключевых числовых характеристик.
+    """
     logs = db.query(RequestLog).all()
 
+    # Сбор числовых рядов для агрегаций
     latency_values = [log.latency_ms for log in logs if log.latency_ms is not None]
     json_fields_values = [log.json_num_fields for log in logs if log.json_num_fields is not None]
     json_size_values = [log.json_size_bytes for log in logs if log.json_size_bytes is not None]

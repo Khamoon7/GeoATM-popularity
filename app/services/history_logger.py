@@ -9,6 +9,11 @@ from app.db.repositories import RequestLogRepository
 
 
 def _safe_json_dumps(obj: Any) -> str:
+    """
+    Безопасно сериализует объект в JSON-строку.
+
+    Используется для логирования произвольных payload’ов.
+    """
     try:
         return json.dumps(obj, ensure_ascii=False, default=str)
     except Exception:
@@ -30,6 +35,12 @@ def log_request(
     address_len: int | None = None,
     address_tokens: int | None = None,
 ) -> None:
+    """
+    Записывает информацию о запросе в историю.
+
+    Используется во всех HTTP-роутах сервиса.
+    Любые ошибки логирования подавляются и не влияют на основной ответ.
+    """
     try:
         repo = RequestLogRepository(db)
 
@@ -47,4 +58,5 @@ def log_request(
             address_tokens=address_tokens,
         )
     except Exception:
+        # Ошибки логирования не должны ломать основной поток
         return

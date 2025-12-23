@@ -8,15 +8,25 @@ from app.services.features_validator import FeaturesValidator
 
 
 class ATMModelService:
-    def __init__(
-        self,
-        model_path: Union[Path, str, None] = None,
-        strict_no_nan: bool = True,
-    ) -> None:
+    """
+    Сервис работы с ML-моделью популярности банкоматов.
+
+    Отвечает за загрузку sklearn Pipeline,
+    валидацию входных признаков и инференс модели.
+    """
+
+    def __init__(self, model_path: Union[Path, str, None] = None, strict_no_nan: bool = True) -> None:
+        """
+        Инициализирует сервис модели.
+
+        Если путь к модели не передан, используется
+        дефолтный файл из директории models/.
+        """
         project_root = Path(__file__).resolve().parents[2]
 
         default_path = project_root / "models" / "final_atm_pipeline.pkl"
 
+        # Определяем путь к файлу модели
         if model_path is None:
             self.model_path = default_path
         else:
@@ -27,6 +37,9 @@ class ATMModelService:
         self.validator = FeaturesValidator(strict_no_nan=strict_no_nan)
 
     def _load_model(self):
+        """
+        Загружает ML-модель с диска и проверяет её интерфейс.
+        """
         if not self.model_path.exists():
             raise FileNotFoundError(f"Файл модели не найден: {self.model_path}")
 
@@ -39,10 +52,13 @@ class ATMModelService:
 
         return model
 
-    def predict_popularity(
-        self,
-        raw_features: pd.DataFrame,
-    ) -> Tuple[float, List[str]]:
+    def predict_popularity(self, raw_features: pd.DataFrame) -> Tuple[float, List[str]]:
+        """
+        Выполняет валидацию признаков и инференс модели.
+
+        Возвращает предсказание и список предупреждений,
+        полученных на этапе валидации.
+        """
         X_valid, warnings = self.validator.validate(raw_features)
         y_pred = self.model.predict(X_valid)
         return float(y_pred[0]), warnings

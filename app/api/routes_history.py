@@ -12,17 +12,20 @@ router = APIRouter(tags=["history"])
 
 
 @router.get("/history")
-def get_history(
-    limit: int = 50,
-    offset: int = 0,
-    db: Session = Depends(get_db),
-):
+def get_history(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+    """
+    Возвращает историю запросов к сервису.
+
+    Используется для отладки, анализа нагрузки
+    и проверки корректности логирования.
+    """
     limit = max(1, min(limit, 500))
     offset = max(0, offset)
 
     repo = RequestLogRepository(db)
     rows = repo.get_history(limit=limit, offset=offset)
 
+    # Явно формируем JSON-ответ без ORM-объектов
     return [
         {
             "id": r.id,
@@ -46,8 +49,14 @@ def get_history(
 @router.delete("/history")
 def delete_history(
     db: Session = Depends(get_db),
-    x_confirm_token: str | None = Header(default=None, alias="X-Confirm-Token"),
+    x_confirm_token: str | None = Header(default=None, alias="X-Confirm-Token")
 ):
+    """
+    Полностью очищает историю запросов.
+
+    Требует подтверждающий токен в заголовке
+    X-Confirm-Token для защиты от случайного удаления.
+    """
     expected = os.getenv("HISTORY_DELETE_TOKEN")
     if not expected:
         raise HTTPException(status_code=500, detail="HISTORY_DELETE_TOKEN is not set on server")

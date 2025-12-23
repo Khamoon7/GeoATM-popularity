@@ -10,6 +10,13 @@ import requests
 
 @dataclass(frozen=True)
 class LocationResult:
+    """
+    Результат работы LocationReader.
+
+    Содержит нормализованные координаты, компоненты адреса
+    и служебную информацию о способе ввода.
+    """
+
     ok: bool
     input_type: str
     normalized_address: Optional[str]
@@ -27,6 +34,15 @@ class LocationResult:
 
 
 class LocationReader:
+    """
+    Сервис определения координат и адресных компонентов.
+
+    Поддерживает:
+    - прямое геокодирование по адресу,
+    - обратное геокодирование по координатам,
+    с использованием Yandex Geocoder API.
+    """
+
     YANDEX_GEOCODER_URL = "https://geocode-maps.yandex.ru/v1/"
     DEFAULT_TIMEOUT_SEC = 10
 
@@ -37,6 +53,11 @@ class LocationReader:
         lang: str = "ru_RU",
         results: int = 1,
     ) -> None:
+        """
+        Инициализирует клиент геокодера.
+
+        API-ключ может быть передан явно или взят из переменной окружения.
+        """
         self.api_key = api_key or os.getenv("YANDEX_GEOCODER_API_KEY")
         self.timeout_sec = timeout_sec
         self.lang = lang
@@ -49,6 +70,11 @@ class LocationReader:
         lat: Optional[Union[float, str]] = None,
         lon: Optional[Union[float, str]] = None,
     ) -> LocationResult:
+        """
+        Определяет локацию по адресу или координатам.
+
+        Способ ввода определяется автоматически и является взаимоисключающим.
+        """
         input_type = self._detect_input_type(address=address, lat=lat, lon=lon)
 
         if not self.api_key:
@@ -71,6 +97,9 @@ class LocationReader:
         lat: Optional[Union[float, str]],
         lon: Optional[Union[float, str]],
     ) -> str:
+        """
+        Определяет тип входных данных и валидирует их комбинацию.
+        """
         has_address = address is not None and str(address).strip() != ""
 
         lat_provided = lat is not None and str(lat).strip() != ""
@@ -87,6 +116,9 @@ class LocationReader:
         return "address" if has_address else "coords"
 
     def _validate_address(self, address: Optional[str]) -> str:
+        """
+        Проверяет и нормализует строку адреса.
+        """
         if address is None or str(address).strip() == "":
             raise ValueError("Адрес пустой")
         addr = str(address).strip()
@@ -100,6 +132,9 @@ class LocationReader:
         lat: Optional[Union[float, str]],
         lon: Optional[Union[float, str]],
     ) -> Tuple[float, float]:
+        """
+        Валидирует и приводит координаты к float.
+        """
         if lat is None or lon is None:
             raise ValueError("Необходимо указать координаты lat и lon")
 
@@ -118,6 +153,9 @@ class LocationReader:
 
 
     def _geocode_address(self, address: str) -> dict:
+        """
+        Выполняет прямое геокодирование адреса.
+        """
         query = address
         if "россия" not in address.lower():
             query = f"{address}, Россия"
@@ -133,7 +171,9 @@ class LocationReader:
         return self._extract_geo(data)
 
     def _reverse_geocode(self, lat: float, lon: float) -> dict:
-
+        """
+        Выполняет обратное геокодирование по координатам.
+        """
         params = {
             "apikey": self.api_key,
             "geocode": f"{lon},{lat}",
@@ -145,6 +185,9 @@ class LocationReader:
         return self._extract_geo(data)
 
     def _request(self, params: Dict[str, Any]) -> dict:
+        """
+        Выполняет HTTP-запрос к Yandex Geocoder API.
+        """
         try:
             r = requests.get(self.YANDEX_GEOCODER_URL, params=params, timeout=self.timeout_sec)
             r.raise_for_status()
@@ -155,6 +198,9 @@ class LocationReader:
             raise RuntimeError(f"Yandex Geocoder unexpected error: {e}") from e
 
     def _extract_geo(self, data: dict) -> dict:
+        """
+        Извлекает координаты и адресные компоненты из ответа геокодера.
+        """
         collection = data.get("response", {}).get("GeoObjectCollection", {})
         members = collection.get("featureMember", [])
         if not members:
@@ -186,6 +232,9 @@ class LocationReader:
         }
 
     def _to_result(self, *, input_type: str, geo: dict) -> LocationResult:
+        """
+        Преобразует сырой ответ геокодера в LocationResult.
+        """
         comp_map = self._components_to_map(geo.get("components", []))
 
         country = comp_map.get("country")
@@ -214,7 +263,11 @@ class LocationReader:
             error=None,
         )
 
-    def _components_to_map(self, components: list) -> Dict[str, str]:
+    @staticmethod
+    def _components_to_map(components: list) -> Dict[str, str]:
+        """
+        Преобразует список компонентов адреса в словарь.
+        """
         out: Dict[str, str] = {}
         for item in components:
             kind = item.get("kind")
@@ -224,6 +277,9 @@ class LocationReader:
         return out
 
     def _is_russia(self, *, country: Optional[str]) -> bool:
+        """
+        Проверяет, относится ли адрес к России.
+        """
         if not country:
             return False
         return country == "Россия"

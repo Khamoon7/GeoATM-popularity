@@ -9,9 +9,19 @@ import pandas as pd
 
 @dataclass
 class FeaturesValidator:
+    """
+    Валидатор признаков для инференса модели.
+
+    Приводит входной DataFrame к ожидаемому набору колонок и типам,
+    а также возвращает предупреждения о корректировках.
+    """
+
     strict_no_nan: bool = True
 
     def __post_init__(self) -> None:
+        """
+        Инициализирует список ожидаемых признаков модели.
+        """
         self.expected_features: List[str] = [
             "id",
             "city",
@@ -55,8 +65,15 @@ class FeaturesValidator:
             "has_subway_nearby",
         ]
 
-
     def validate(self, raw_features: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
+        """
+        Приводит входные признаки к формату, ожидаемому моделью.
+
+        - Удаляет лишние колонки
+        - Добавляет отсутствующие колонки (NaN)
+        - Приводит типы и заполняет пропуски
+        - Возвращает итоговый DataFrame и список предупреждений
+        """
         if not isinstance(raw_features, pd.DataFrame):
             raise ValueError("raw_features должен быть pandas DataFrame")
 
@@ -66,11 +83,13 @@ class FeaturesValidator:
         warnings: List[str] = []
         X = raw_features.copy()
 
+        # Удаляем колонки, которые модель не ожидает
         extra_cols = [c for c in X.columns if c not in self.expected_features]
         if extra_cols:
             X.drop(columns=extra_cols, inplace=True)
             warnings.append(f"Удалены лишние признаки: {extra_cols}")
 
+        # Добавляем отсутствующие колонки, чтобы совпал контракт модели
         missing_cols = [c for c in self.expected_features if c not in X.columns]
         for c in missing_cols:
             X[c] = np.nan
@@ -79,6 +98,7 @@ class FeaturesValidator:
 
         cat_cols = {"city"}
 
+        # Приводим типы и заполняем значения
         for c in self.expected_features:
             if c in cat_cols:
                 X[c] = X[c].astype("string").fillna("__NA__")
@@ -95,6 +115,7 @@ class FeaturesValidator:
             nan_cols = X.columns[X.isna().any()].tolist()
             raise ValueError(f"После валидации остались NaN в колонках: {nan_cols}")
 
+        # Финальная гарантия float для численных колонок
         for c in self.expected_features:
             if c in cat_cols:
                 continue
