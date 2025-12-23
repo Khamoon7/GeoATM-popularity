@@ -21,7 +21,7 @@ def log_request(
     endpoint: str,
     method: str,
     status_code: int,
-    latency_ms: int,
+    latency_ms: float,
     request_payload: Any | None = None,
     response_payload: Any | None = None,
     error: str | None = None,
@@ -30,18 +30,21 @@ def log_request(
     address_len: int | None = None,
     address_tokens: int | None = None,
 ) -> None:
-    repo = RequestLogRepository(db)
+    try:
+        repo = RequestLogRepository(db)
 
-    repo.add_log(
-        endpoint=endpoint,
-        method=method,
-        status_code=status_code,
-        latency_ms=latency_ms,
-        request_payload=_safe_json_dumps(request_payload) if request_payload is not None else None,
-        response_payload=_safe_json_dumps(response_payload) if response_payload is not None else None,
-        error=error,
-        json_size_bytes=json_size_bytes,
-        json_num_fields=json_num_fields,
-        address_len=address_len,
-        address_tokens=address_tokens,
-    )
+        repo.add_log(
+            endpoint=endpoint,
+            method=method,
+            status_code=status_code,
+            latency_ms=float(latency_ms),
+            request_payload=_safe_json_dumps(request_payload) if request_payload is not None else None,
+            response_payload=_safe_json_dumps(response_payload) if response_payload is not None else None,
+            error=error,
+            json_size_bytes=json_size_bytes,
+            json_num_fields=json_num_fields,
+            address_len=address_len,
+            address_tokens=address_tokens,
+        )
+    except Exception:
+        return

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.db.repositories import RequestLogRepository
+from app.db.session import get_db
 
 router = APIRouter(tags=["history"])
 
@@ -33,6 +34,10 @@ def get_history(
             "request_payload": r.request_payload,
             "response_payload": r.response_payload,
             "error": r.error,
+            "json_size_bytes": r.json_size_bytes,
+            "json_num_fields": r.json_num_fields,
+            "address_len": r.address_len,
+            "address_tokens": r.address_tokens,
         }
         for r in rows
     ]

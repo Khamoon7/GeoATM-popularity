@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import String, Integer, DateTime, Text
+from sqlalchemy import DateTime, Integer, String, Text, Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -20,7 +20,7 @@ class RequestLog(Base):
     method: Mapped[str] = mapped_column(String(16), nullable=False)
 
     status_code: Mapped[int] = mapped_column(Integer, nullable=False)
-    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False)
 
     request_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
     response_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -30,4 +30,3 @@ class RequestLog(Base):
     json_num_fields: Mapped[int | None] = mapped_column(Integer, nullable=True)
     address_len: Mapped[int | None] = mapped_column(Integer, nullable=True)
     address_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
-

@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Tuple, List, Union
-import sys
 
 import joblib
 import pandas as pd
@@ -25,7 +24,6 @@ class ATMModelService:
             self.model_path = p if p.is_absolute() else (project_root / p)
 
         self.model = self._load_model()
-
         self.validator = FeaturesValidator(strict_no_nan=strict_no_nan)
 
     def _load_model(self):
@@ -46,7 +44,5 @@ class ATMModelService:
         raw_features: pd.DataFrame,
     ) -> Tuple[float, List[str]]:
         X_valid, warnings = self.validator.validate(raw_features)
-
         y_pred = self.model.predict(X_valid)
-
         return float(y_pred[0]), warnings

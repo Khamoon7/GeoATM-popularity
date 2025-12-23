@@ -13,10 +13,10 @@ import pandas as pd
 
 
 def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    R = 6371000  # радиус Земли в метрах
+    R = 6_371_000
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
@@ -51,7 +51,6 @@ class FeaturesBuilder:
         "restaurants": ['"amenity"="restaurant"', '"amenity"="fast_food"'],
         "public_transport": ['"public_transport"="stop_position"', '"highway"="bus_stop"'],
         "parking": ['"amenity"="parking"'],
-
         "education": [
             '"amenity"="school"',
             '"amenity"="university"',
@@ -75,24 +74,41 @@ class FeaturesBuilder:
 
     async def build(
         self,
-        lat: float,
-        lon: float,
+        payload: Optional[Dict[str, Any]] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
         atm_params: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
-        lat = float(lat)
-        lon = float(lon)
-
         params: Dict[str, Any] = {}
+        if payload:
+            params.update(payload)
         if atm_params:
             params.update(atm_params)
         params.update(kwargs)
 
-        row: Dict[str, Any] = {"atm_lat": lat, "atm_lon": lon, **params,
-                               "population_density_per_km2": self._get_population_density(params.get("region"))}
+        lat_val = params.get("geo_lat", lat)
+        lon_val = params.get("geo_lon", lon)
+        if lat_val is None or lon_val is None:
+            raise ValueError("Не заданы координаты (geo_lat/geo_lon или lat/lon)")
 
+        lat_f = float(lat_val)
+        lon_f = float(lon_val)
 
-        headers = {"User-Agent": "features-builder/1.0 (contact: you@example.com)"}
+        row: Dict[str, Any] = {
+
+            "geo_lat": lat_f,
+            "geo_lon": lon_f,
+            **params,
+            "population_density_per_km2": self._get_population_density(params.get("region")),
+        }
+
+        row.pop("atm_lat", None)
+        row.pop("atm_lon", None)
+        row.pop("lat", None)
+        row.pop("lon", None)
+
+        headers = {"User-Agent": "features-builder/1.0"}
         timeout = httpx.Timeout(self.timeout_s)
 
         sem = asyncio.Semaphore(max(1, int(self.concurrency)))
@@ -101,7 +117,7 @@ class FeaturesBuilder:
 
             async def run_group(group_name: str, filters: List[str]) -> Dict[str, Any]:
                 async with sem:
-                    return await self._features_for_group(client, lat, lon, group_name, filters)
+                    return await self._features_for_group(client, lat_f, lon_f, group_name, filters)
 
             tasks = [run_group(g, f) for g, f in self.poi_filters.items()]
             results = await asyncio.gather(*tasks)
@@ -273,7 +289,6 @@ class FeaturesBuilder:
         feats: Dict[str, Any] = {}
         feats[f"count_{group}_{self.count_radius_m}m"] = cnt_300
 
-        # для banks_atms nearest не создаём
         if group != "banks_atms":
             feats[f"nearest_{group}_dist_m"] = float(min(dists)) if dists else float("nan")
 
