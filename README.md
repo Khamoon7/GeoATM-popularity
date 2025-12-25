@@ -111,7 +111,7 @@ pip install -r requirements.txt
 ### 3) Запуск сервиса
 Из корня проекта выполните команду:
 ```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload
 ```
 ### 4) Swagger / OpenAPI
 После запуска сервиса будут доступны:
