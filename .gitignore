@@ -1,9 +1,21 @@
 # IDE
 .idea/
 
+# Virtual environment
+.venv/
+
 # Environment variables
 .env
 
+# Local database
 geoatm.db
 
+# Python cache
 __pycache__/
+
+# Local assistant state
+.claude/
+
+# Notebook archives and logs
+notebooks/archive/
+notebooks/catboost_info/
