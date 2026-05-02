@@ -153,6 +153,8 @@ CPU, нативная поддержка категорий через тип `c
 | Decision Tree (базовая)   | 0.0493     | 0.6742     |                                |
 | TabNet (Optuna)           | 0.0491     | 0.6766     | `models/tabnet_best.pt`        |
 | Decision Tree (Optuna)    | 0.0484     | 0.6858     | `models/dt_best.joblib`        |
+| FT-Transformer (Optuna)   | 0.0480     | 0.6907     |                                |
+| FT-Transformer (базовая)  | 0.0473     | 0.7003     | `models/fttransformer_base.pt` |
 | CatBoost (базовая)        | 0.0455     | 0.7223     |                                |
 | CatBoost (Optuna)         | 0.0453     | 0.7249     | `models/catboost_best.cbm`     |
 | LightGBM (базовая)        | 0.0452     | 0.7259     |                                |
