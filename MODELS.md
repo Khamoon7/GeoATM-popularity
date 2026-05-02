@@ -143,6 +143,34 @@ CPU, нативная поддержка категорий через тип `c
 
 ---
 
+### MLP (`models/mlp_baseline.pt`, `models/mlp_optuna.pt`)
+
+GPU (Tesla T4), PyTorch, препроцессинг вручную (медианный imputer + log1p для расстояний + StandardScaler + OrdinalEncoder).
+
+Архитектура: `Input → BatchNorm → [Linear → BatchNorm → ReLU → Dropout] × N → Linear → Output`
+
+Входной BatchNorm нормализует масштаб признаков. Dropout в каждом блоке. Выходной слой без активации. Оптимизатор: Adam + ReduceLROnPlateau (×0.5 при стагнации 10 эпох). Early stopping по val RMSE (patience=20).
+
+**Базовая модель** (`hidden_dims=[256, 128, 64], dropout=0.3, lr=1e-3, weight_decay=1e-4`)
+
+- Обучался все 200 эпох (early stopping не сработал), лучший val RMSE = 0.0484
+
+**Optuna** (50 триалов, оптимизация по val RMSE; внутри каждого триала 100 эпох + early stopping patience=10)
+
+| Гиперпараметр | Диапазон поиска | Лучшее значение |
+|---|---|---|
+| `n_layers` | целое [1, 4] | 1 |
+| `hidden_i` | [64, 128, 256, 512] | 128 |
+| `dropout` | равномерное [0.1, 0.5] | 0.211 |
+| `lr` | log-равномерное [1e-4, 1e-2] | 7.83e-3 |
+| `weight_decay` | log-равномерное [1e-5, 1e-3] | 2.22e-4 |
+
+- Лучшая архитектура: один скрытый слой [128] — задача не потребовала глубокой сети
+- Early stopping сработал на эпохе 121, лучший val RMSE = 0.0470
+
+---
+
+
 ## Результаты на тестовой выборке
 
 
@@ -150,8 +178,10 @@ CPU, нативная поддержка категорий через тип `c
 | ------------------------- | ---------- | ---------- | ------------------------------ |
 | LinearRegression          | 0.0591     | 0.5406     | `models/linear_model_best.pkl` |
 | TabNet (базовая)          | 0.0500     | 0.6647     |                                |
+| MLP (базовая)             | 0.0522     | 0.6343     | `models/mlp_baseline.pt`       |
 | Decision Tree (базовая)   | 0.0493     | 0.6742     |                                |
 | TabNet (Optuna)           | 0.0491     | 0.6766     | `models/tabnet_best.pt`        |
+| MLP (Optuna)              | 0.0493     | 0.6736     | `models/mlp_optuna.pt`         |
 | Decision Tree (Optuna)    | 0.0484     | 0.6858     | `models/dt_best.joblib`        |
 | FT-Transformer (Optuna)   | 0.0480     | 0.6907     |                                |
 | FT-Transformer (базовая)  | 0.0473     | 0.7003     | `models/fttransformer_base.pt` |
