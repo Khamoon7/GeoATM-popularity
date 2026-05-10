@@ -192,8 +192,7 @@ GPU (Tesla T4), PyTorch, препроцессинг вручную (медиан
 | Random Forest (базовая)   | 0.0446     | 0.7327     |                                  |
 | Random Forest (Optuna) ⚠️ | 0.0444     | 0.7359     | `models/rf_best.joblib`         |
 | MLP ResNet-like (базовая) | 0.0573     | 0.5596     | `models/mlp_resnet_baseline.pt` |
-| MLP ResNet-like (Optuna)  
-
+| MLP ResNet-like (Optuna)  | 0.0501     | 0.6639     | `models/mlp_resnet_optuna_v2.pt`|
 
 > **Лучшая по надёжности: LightGBM (Optuna)** - RMSE 0.0448, R² 0.7307.  
 > ⚠️ RF Optuna формально ниже по RMSE (0.0444), но train R² ≈ 0.94 vs test R² ≈ 0.74 - сильный gap; LightGBM стабильнее и предпочтительнее для продакшна.  
