@@ -173,25 +173,26 @@ GPU (Tesla T4), PyTorch, препроцессинг вручную (медиан
 
 ## Результаты на тестовой выборке
 
-
-| Модель                    | RMSE       | R²         | Файл                           |
-| ------------------------- | ---------- | ---------- | ------------------------------ |
-| LinearRegression          | 0.0591     | 0.5406     | `models/linear_model_best.pkl` |
-| TabNet (базовая)          | 0.0500     | 0.6647     |                                |
-| MLP (базовая)             | 0.0522     | 0.6343     | `models/mlp_baseline.pt`       |
-| Decision Tree (базовая)   | 0.0493     | 0.6742     |                                |
-| TabNet (Optuna)           | 0.0491     | 0.6766     | `models/tabnet_best.pt`        |
-| MLP (Optuna)              | 0.0493     | 0.6736     | `models/mlp_optuna.pt`         |
-| Decision Tree (Optuna)    | 0.0484     | 0.6858     | `models/dt_best.joblib`        |
-| FT-Transformer (Optuna)   | 0.0480     | 0.6907     |                                |
-| FT-Transformer (базовая)  | 0.0473     | 0.7003     | `models/fttransformer_base.pt` |
-| CatBoost (базовая)        | 0.0455     | 0.7223     |                                |
-| CatBoost (Optuna)         | 0.0453     | 0.7249     | `models/catboost_best.cbm`     |
-| LightGBM (базовая)        | 0.0452     | 0.7259     |                                |
-| XGBoost (базовая)         | 0.0451     | 0.7276     | `models/xgboost_best.json`     |
-| **LightGBM (Optuna)**     | **0.0448** | **0.7307** | `models/lightgbm_best.txt`     |
-| Random Forest (базовая)   | 0.0446     | 0.7327     |                                |
-| Random Forest (Optuna) ⚠️ | 0.0444     | 0.7359     | `models/rf_best.joblib`        |
+| Модель                    | RMSE       | R²         | Файл                             |
+|---------------------------|-----------:|-----------:|----------------------------------|
+| LinearRegression          | 0.0591     | 0.5406     | `models/linear_model_best.pkl`  |
+| TabNet (базовая)          | 0.0500     | 0.6647     |                                  |
+| MLP (базовая)             | 0.0522     | 0.6343     | `models/mlp_baseline.pt`        |
+| Decision Tree (базовая)   | 0.0493     | 0.6742     |                                  |
+| TabNet (Optuna)           | 0.0491     | 0.6766     | `models/tabnet_best.pt`         |
+| MLP (Optuna)              | 0.0493     | 0.6736     | `models/mlp_optuna.pt`          |
+| Decision Tree (Optuna)    | 0.0484     | 0.6858     | `models/dt_best.joblib`         |
+| FT-Transformer (Optuna)   | 0.0480     | 0.6907     |                                  |
+| FT-Transformer (базовая)  | 0.0473     | 0.7003     | `models/fttransformer_base.pt`  |
+| CatBoost (базовая)        | 0.0455     | 0.7223     |                                  |
+| CatBoost (Optuna)         | 0.0453     | 0.7249     | `models/catboost_best.cbm`      |
+| LightGBM (базовая)        | 0.0452     | 0.7259     |                                  |
+| XGBoost (базовая)         | 0.0451     | 0.7276     | `models/xgboost_best.json`      |
+| **LightGBM (Optuna)**     | **0.0448** | **0.7307** | `models/lightgbm_best.txt`      |
+| Random Forest (базовая)   | 0.0446     | 0.7327     |                                  |
+| Random Forest (Optuna) ⚠️ | 0.0444     | 0.7359     | `models/rf_best.joblib`         |
+| MLP ResNet-like (базовая) | 0.0573     | 0.5596     | `models/mlp_resnet_baseline.pt` |
+| MLP ResNet-like (Optuna)  
 
 
 > **Лучшая по надёжности: LightGBM (Optuna)** - RMSE 0.0448, R² 0.7307.  
