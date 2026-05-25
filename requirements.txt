@@ -26,6 +26,12 @@ requests~=2.32.5
 
 
 # =========================
+# MLflow
+# =========================
+mlflow>=2.14.0
+
+
+# =========================
 # ML / Data
 # =========================
 numpy~=2.3.2
@@ -33,6 +39,21 @@ pandas~=2.3.1
 scikit-learn==1.8.0
 joblib==1.5.3
 scipy~=1.16.1
+optuna>=4.0
+lightgbm>=4.0
+xgboost>=2.0
+catboost>=1.2
+shap>=0.40
+
+
+# =========================
+# Deep Learning
+# =========================
+# torch устанавливается отдельно под конкретную CUDA:
+# pip install torch --index-url https://download.pytorch.org/whl/cu130
+torch>=2.0
+pytorch-tabnet>=4.1
+rtdl
 
 
 # =========================
@@ -41,12 +62,15 @@ scipy~=1.16.1
 matplotlib~=3.10.3
 seaborn~=0.13.2
 folium~=0.20.0
+tqdm>=4.60
+ydata-profiling>=4.0
 
 
 # =========================
 # Parsing / Scraping
 # =========================
 beautifulsoup4~=4.14.3
+geopy>=2.0
 
 
 # =========================

@@ -19,3 +19,10 @@ __pycache__/
 # Notebook archives and logs
 notebooks/archive/
 notebooks/catboost_info/
+
+# MLflow / MinIO runtime data (папки трекаются через .gitkeep)
+data/minio_data/*
+!data/minio_data/.gitkeep
+data/mlflow/*
+!data/mlflow/.gitkeep
+data/mlflow_data/
