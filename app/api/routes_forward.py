@@ -71,7 +71,7 @@ def _segment_from_prediction(pred: float) -> str:
         return "high"
     if pred < 0:
         return "low"
-    return "med"
+    return "medium"
 
 
 @router.post("/forward", response_model=ATMPredictResponse)

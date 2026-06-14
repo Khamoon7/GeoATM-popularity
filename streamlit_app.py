@@ -35,7 +35,7 @@ st.markdown(
 
 st.sidebar.header("Настройки")
 api_base_url = st.sidebar.text_input("Base URL API", value="http://127.0.0.1:8000").rstrip("/")
-timeout_s = st.sidebar.number_input("Timeout (сек)", min_value=1, max_value=120, value=60, step=1)
+timeout_s = st.sidebar.number_input("Timeout (сек)", min_value=1, max_value=600, value=180, step=10)
 
 st.sidebar.markdown("---")
 st.sidebar.caption("Эндпоинт: POST /forward")

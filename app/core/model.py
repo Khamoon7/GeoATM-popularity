@@ -1,64 +1,92 @@
-from pathlib import Path
-from typing import Tuple, List, Union
+from __future__ import annotations
 
-import joblib
+import os
+from pathlib import Path
+from typing import List, Tuple, Union
+
 import pandas as pd
 
-from app.services.features_validator import FeaturesValidator
+from app.core.preprocess import load_medians, preprocess
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# Источник модели по умолчанию — локальный LightGBM booster.
+# Можно переопределить через переменную окружения MODEL_URI:
+#   - локальный файл:  models/lightgbm_best.txt  (или абсолютный путь)
+#   - MLflow Registry: models:/GeoATM-LightGBM-PRD/1  (или runs:/<run_id>/model)
+DEFAULT_MODEL_URI = "models/lightgbm_best.txt"
 
 
 class ATMModelService:
     """
-    Сервис работы с ML-моделью популярности банкоматов.
+    Сервис работы с ML-моделью популярности банкоматов (LightGBM Optuna, v2).
 
-    Отвечает за загрузку sklearn Pipeline,
-    валидацию входных признаков и инференс модели.
+    Загружает модель из локального booster-файла или из MLflow Model Registry,
+    применяет препроцессинг (как при обучении) и выполняет инференс.
     """
 
-    def __init__(self, model_path: Union[Path, str, None] = None, strict_no_nan: bool = True) -> None:
+    def __init__(self, model_uri: Union[str, None] = None) -> None:
         """
         Инициализирует сервис модели.
 
-        Если путь к модели не передан, используется
-        дефолтный файл из директории models/.
+        Источник модели берётся из аргумента, иначе из MODEL_URI,
+        иначе — локальный файл models/lightgbm_best.txt.
         """
-        project_root = Path(__file__).resolve().parents[2]
+        self.model_uri = model_uri or os.getenv("MODEL_URI") or DEFAULT_MODEL_URI
+        self.medians = load_medians()
+        self.model, self.backend = self._load_model(self.model_uri)
 
-        default_path = project_root / "models" / "final_atm_pipeline.pkl"
-
-        # Определяем путь к файлу модели
-        if model_path is None:
-            self.model_path = default_path
-        else:
-            p = Path(model_path)
-            self.model_path = p if p.is_absolute() else (project_root / p)
-
-        self.model = self._load_model()
-        self.validator = FeaturesValidator(strict_no_nan=strict_no_nan)
-
-    def _load_model(self):
+    def _load_model(self, uri: str):
         """
-        Загружает ML-модель с диска и проверяет её интерфейс.
+        Загружает модель: MLflow pyfunc (models:/, runs:/) или локальный LightGBM booster.
         """
-        if not self.model_path.exists():
-            raise FileNotFoundError(f"Файл модели не найден: {self.model_path}")
+        if uri.startswith("models:/") or uri.startswith("runs:/"):
+            return self._load_from_mlflow(uri), "mlflow"
+        return self._load_local_booster(uri), "lightgbm"
 
-        model = joblib.load(self.model_path)
+    def _load_from_mlflow(self, uri: str):
+        """
+        Загружает модель из MLflow Model Registry через mlflow.pyfunc.
 
-        if not hasattr(model, "predict"):
-            raise TypeError(
-                f"Загруженный объект не поддерживает predict(): {type(model)}"
-            )
+        Требует поднятый MLflow + MinIO (docker-compose) и переменные окружения
+        MLFLOW_TRACKING_URI / AWS_* / MLFLOW_S3_ENDPOINT_URL.
+        """
+        import mlflow  # импорт здесь, чтобы не тянуть mlflow при локальном пути
 
-        return model
+        tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+        if tracking_uri:
+            mlflow.set_tracking_uri(tracking_uri)
+
+        return mlflow.pyfunc.load_model(uri)
+
+    def _load_local_booster(self, uri: str):
+        """
+        Загружает локальный LightGBM booster из текстового файла.
+        """
+        import lightgbm as lgb
+
+        p = Path(uri)
+        path = p if p.is_absolute() else (PROJECT_ROOT / p)
+        if not path.exists():
+            raise FileNotFoundError(f"Файл модели не найден: {path}")
+
+        return lgb.Booster(model_file=str(path))
 
     def predict_popularity(self, raw_features: pd.DataFrame) -> Tuple[float, List[str]]:
         """
-        Выполняет валидацию признаков и инференс модели.
+        Применяет препроцессинг и инференс модели.
 
-        Возвращает предсказание и список предупреждений,
-        полученных на этапе валидации.
+        Возвращает предсказание и список предупреждений.
         """
-        X_valid, warnings = self.validator.validate(raw_features)
-        y_pred = self.model.predict(X_valid)
+        if not isinstance(raw_features, pd.DataFrame) or raw_features.shape[0] == 0:
+            raise ValueError("raw_features должен быть непустым pandas DataFrame")
+
+        warnings: List[str] = []
+        X = preprocess(raw_features, self.medians)
+
+        y_pred = self.model.predict(X)
+
+        # mlflow.pyfunc возвращает numpy/Series/DataFrame — нормализуем к float
+        if hasattr(y_pred, "values"):
+            y_pred = y_pred.values
         return float(y_pred[0]), warnings

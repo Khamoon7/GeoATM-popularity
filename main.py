@@ -56,9 +56,15 @@ def model_info():
 
     Используется для диагностики и версионирования.
     """
+    from app.api.deps import get_forward_service
+
+    svc = get_forward_service()
     return {
-        "model_name": "ATM Popularity Model",
-        "model_version": "1.0.0",
+        "model_name": "GeoATM LightGBM (Optuna-100)",
+        "model_uri": svc.model.model_uri,
+        "backend": svc.model.backend,
+        "n_features": 67,
+        "feature_version": "v2",
     }
 
 
